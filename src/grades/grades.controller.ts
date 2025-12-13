@@ -1,6 +1,7 @@
 import { GradesService } from './grades.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { UpdateGradeDto } from './dto/update-grade.dto';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 
 @Controller('grades')
 export class GradesController {
@@ -21,10 +22,10 @@ export class GradesController {
   //   return this.gradesService.findOne(+id);
   // }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateGradeDto: UpdateGradeDto) {
-  //   return this.gradesService.update(+id, updateGradeDto);
-  // }
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateGradeDto: UpdateGradeDto) {
+    return this.gradesService.update(id, updateGradeDto);
+  }
 
   // @Delete(':id')
   // remove(@Param('id') id: string) {

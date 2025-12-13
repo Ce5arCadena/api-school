@@ -41,8 +41,26 @@ export class GradesService {
     return `This action returns a #${id} grade`;
   }
 
-  update(id: number, updateGradeDto: UpdateGradeDto) {
-    return `This action updates a #${id} grade`;
+  async update(id: number, updateGradeDto: UpdateGradeDto) {
+    try {
+      const grade = await this.gradeRepository.findOneBy({ id });
+      if (!grade) {
+        return {
+          message: 'No se encontró el curso.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+          errors: [`El recurso especificado (${id}), no se encontró`]
+        };
+      };
+
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al actualizar el curso',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   remove(id: number) {
