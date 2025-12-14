@@ -1,3 +1,4 @@
+import { Public } from './decorator';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signin-dto';
 import { 
@@ -12,6 +13,7 @@ export class AuthController {
     private authService: AuthService
   ){};
 
+  @Public()
   @Post('login')
   signIn(@Body() signInDto: SignInDto) {
     return this.authService.signIn(signInDto);
