@@ -8,6 +8,7 @@ import { GradesModule } from './grades/grades.module';
 import { Grade } from './grades/entities/grade.entity';
 import { SchoolsModule } from './schools/schools.module';
 import { School } from './schools/entities/school.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { School } from './schools/entities/school.entity';
     }),
     GradesModule,
     SchoolsModule,
-    UsersModule
+    UsersModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

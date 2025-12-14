@@ -12,5 +12,6 @@ import { SchoolsModule } from 'src/schools/schools.module';
   ],
   controllers: [UsersController],
   providers: [UsersService],
+  exports: [UsersService]
 })
 export class UsersModule {}

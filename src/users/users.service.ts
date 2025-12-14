@@ -63,6 +63,20 @@ export class UsersService {
     return `This action returns a #${id} user`;
   }
 
+  // Busca un usuario por email.
+  async findByEmail(email: string): Promise<User | null> {
+    try {
+      return this.userRepository.findOneBy({email});
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al consultar el usuario',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.UNAUTHORIZED,
+      }, HttpStatus.UNAUTHORIZED);
+    };
+  }
+
   update(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
   }
