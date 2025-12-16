@@ -13,6 +13,7 @@ import { School } from "src/schools/entities/school.entity";
 
 export enum UserRole {
     SCHOOL = 'SCHOOL',
+    STUDENT = 'STUDENT',
     TEACHER = 'TEACHER',
     SUPERADMIN = 'SUPERADMIN',
 };

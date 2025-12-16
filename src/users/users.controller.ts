@@ -1,26 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete,
+  Controller, 
+} from '@nestjs/common';
 import { UsersService } from './users.service';
+import { UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRole } from './entities/user.entity';
+import { CurrentUser, Roles } from 'src/auth/decorator';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('create-super')
+  @Roles(UserRole.SUPERADMIN)
   createSuperAdmin(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto, UserRole.SUPERADMIN);
+    return this.usersService.createSuper(createUserDto, UserRole.SUPERADMIN);
   }
 
   @Post('create-school')
-  createSchool(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto, UserRole.SCHOOL);
+  @Roles(UserRole.SUPERADMIN)
+  createSchool(@Body() createUserDto: CreateUserDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.usersService.create(createUserDto, UserRole.SCHOOL, userAuth);
   }
 
   @Post('create-teacher')
-  createTeacher(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto, UserRole.TEACHER);
+  @Roles(UserRole.SCHOOL)
+  createTeacher(@Body() createUserDto: CreateUserDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.usersService.create(createUserDto, UserRole.TEACHER, userAuth);
   }
 
   @Get()

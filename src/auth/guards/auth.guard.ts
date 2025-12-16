@@ -8,7 +8,8 @@ import {
 import { Request } from "express";
 import { JwtService } from "@nestjs/jwt";
 import { Reflector } from "@nestjs/core";
-import { ISPUBLICKEY } from "./decorator";
+import { ISPUBLICKEY, ROLES_KEY } from "../decorator";
+import { UserRole } from "src/users/entities/user.entity";
 
 @Injectable()
 export class AuthGuard implements CanActivate{
@@ -41,6 +42,24 @@ export class AuthGuard implements CanActivate{
       });
 
       request.userAuth = payload;
+
+      // verificar los roles
+      const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
+        context.getHandler(),
+        context.getClass()
+      ]);
+
+      if (!requiredRoles) return true;
+      const hasRole = requiredRoles.some((role) => payload.rol === role);
+      if (!hasRole) {
+        throw new HttpException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: [],
+        }, HttpStatus.UNAUTHORIZED);
+      };
+
       return true;
     } catch (error) {
       throw new HttpException({
