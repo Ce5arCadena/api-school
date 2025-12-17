@@ -11,7 +11,7 @@ import { UsersService } from './users.service';
 import { UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CurrentUser, Roles } from 'src/auth/decorator';
+import { CurrentUser, Public, Roles } from 'src/auth/decorator';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 
 @Controller('users')

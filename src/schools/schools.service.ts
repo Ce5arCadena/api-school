@@ -1,8 +1,6 @@
 import { Repository } from 'typeorm';
-import bcrypt from 'node_modules/bcryptjs';
 import { School } from './entities/school.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { plainToInstance } from 'class-transformer';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
@@ -25,6 +23,7 @@ export class SchoolsService {
           errors: [`El nombre (${createSchoolDto.name}), ya está en uso.`]
         };
       };
+      console.log(createSchoolDto)
 
       const newSchool = await this.schoolRepository.save(createSchoolDto);
 

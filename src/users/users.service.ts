@@ -78,8 +78,8 @@ export class UsersService {
       const passwordHash = await bcrypt.hash(createUserDto.password, 12);
 
       if (rol === UserRole.SCHOOL) {
-        const saveSchool = await this.schoolService.create({name: createUserDto.name});
-        const saveUser = await this.userRepository.save({...createUserDto, rol, password: passwordHash, school: saveSchool.data});
+        const saveUser = await this.userRepository.save({ ...createUserDto, rol, password: passwordHash });
+        await this.schoolService.create({ name: createUserDto.name, user: saveUser });
         const userSerialize = plainToInstance(User, saveUser);
 
         return {
@@ -89,7 +89,9 @@ export class UsersService {
           errors: [],
           data: userSerialize
         };
-      };
+      } else {
+        //TODO: lógica de guardado de profesores
+      }
     } catch (error) {
       throw new HttpException({
         message: 'Error al crear el recurso',
