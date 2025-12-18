@@ -79,7 +79,7 @@ export class UsersService {
 
       if (rol === UserRole.SCHOOL) {
         const saveUser = await this.userRepository.save({ ...createUserDto, rol, password: passwordHash });
-        await this.schoolService.create({ name: createUserDto.name, user: saveUser });
+        await this.schoolService.create({id: saveUser.id, name: createUserDto.name, user: saveUser });
         const userSerialize = plainToInstance(User, saveUser);
 
         return {

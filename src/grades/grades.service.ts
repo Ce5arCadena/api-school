@@ -1,20 +1,34 @@
 import { Repository } from 'typeorm';
 import { Grade } from './entities/grade.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersService } from 'src/users/users.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class GradesService {
   constructor(
     @InjectRepository(Grade) 
-    private gradeRepository: Repository<Grade>
+    private gradeRepository: Repository<Grade>,
+    private usersService: UsersService
   ) {}
 
-  async create(createGradeDto: CreateGradeDto) {
+  async create(createGradeDto: CreateGradeDto, user: JwtPayload) {
     try {
-      const grade = await this.gradeRepository.save(createGradeDto);
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: [],
+        });
+      };
+
+      const grade = await this.gradeRepository.save({...createGradeDto, school: userAuth});
 
       return {
         message: 'Curso creado.',
@@ -27,7 +41,7 @@ export class GradesService {
       throw new HttpException({
         message: 'Error al crear el curso',
         icon: 'error',
-        errors: [error],
+        errors: [],
         status: HttpStatus.INTERNAL_SERVER_ERROR,
       }, HttpStatus.INTERNAL_SERVER_ERROR);
     };

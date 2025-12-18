@@ -1,5 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { TeachersService } from './teachers.service';
+import { CurrentUser, Roles } from 'src/auth/decorator';
+import { UserRole } from 'src/users/entities/user.entity';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 
@@ -8,8 +11,9 @@ export class TeachersController {
   constructor(private readonly teachersService: TeachersService) {}
 
   @Post()
-  create(@Body() createTeacherDto: CreateTeacherDto) {
-    return this.teachersService.create(createTeacherDto);
+  @Roles(UserRole.SCHOOL)
+  create(@Body() createTeacherDto: CreateTeacherDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.teachersService.create(createTeacherDto, userAuth);
   }
 
   @Get()

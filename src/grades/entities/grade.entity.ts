@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { 
+    Entity, 
+    Column,  
+    ManyToOne, 
+    JoinColumn,
+    CreateDateColumn, 
+    UpdateDateColumn, 
+    PrimaryGeneratedColumn,
+} from "typeorm";
+import { School } from "src/schools/entities/school.entity";
 
 @Entity()
 export class Grade {
@@ -10,6 +19,10 @@ export class Grade {
         length: 70
     })
     name: string;
+
+    @ManyToOne(() => School)
+    @JoinColumn()
+    school: School;
 
     @Column({ default: 'ACTIVE' })
     isActive: string;

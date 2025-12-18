@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 
 @Injectable()
 export class TeachersService {
-  create(createTeacherDto: CreateTeacherDto) {
+  create(createTeacherDto: CreateTeacherDto, user: JwtPayload) {
     return 'This action adds a new teacher';
   }
 
