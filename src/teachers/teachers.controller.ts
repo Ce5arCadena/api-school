@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete,
+  Controller, 
+} from '@nestjs/common';
 import { TeachersService } from './teachers.service';
 import { CurrentUser, Roles } from 'src/auth/decorator';
 import { UserRole } from 'src/users/entities/user.entity';

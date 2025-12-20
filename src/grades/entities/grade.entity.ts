@@ -1,4 +1,5 @@
 import { 
+    Index,
     Entity, 
     Column,  
     ManyToOne, 
@@ -10,6 +11,7 @@ import {
 import { School } from "src/schools/entities/school.entity";
 
 @Entity()
+@Index(['name', 'school'], { unique: true })
 export class Grade {
     @PrimaryGeneratedColumn()
     id: number;
