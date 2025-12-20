@@ -4,15 +4,23 @@ import {
   HttpException, 
   UnauthorizedException, 
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { Grade } from './entities/grade.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { UsersService } from 'src/users/users.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
+import { FindOperator, ILike, Repository } from 'typeorm';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { ParamsFindAllDto } from './dto/params-find-all.dto';
+
+interface GradeQuery {
+  school: {
+    id: number
+  },
+  isActive: string,
+  name?: FindOperator<string>
+}
 
 @Injectable()
 export class GradesService {
@@ -63,11 +71,97 @@ export class GradesService {
   }
 
   async findAll(params: ParamsFindAllDto, user: JwtPayload) {
-    return `This action returns all grades`;
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const conditions: GradeQuery  = {
+        school: { id: userAuth.id },
+        isActive: 'ACTIVE',
+      };
+
+      if (params.search) {
+        conditions.name = ILike(`%${params.search.trim()}%`)
+      };
+
+      const [listGrades, totalGrades] = await this.gradeRepository.findAndCount({
+        where: conditions,
+        order: {
+          created: 'ASC'
+        },
+        take: params.limit,
+        skip: params.offset,
+      });
+
+      return {
+        message: 'Lista de cursos.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          grades: listGrades,
+          total: totalGrades
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al listar los cursos',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} grade`;
+  async findOne(id: number, user: JwtPayload) {
+    try {
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const grade = await this.gradeRepository.findOne({
+        where: {
+          id,
+          school: { id: userAuth.id },
+          isActive: 'ACTIVE'
+        }
+      });
+
+      if (!grade) {
+        return {
+          message: 'No se encontró el curso.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      return {
+        message: 'Curso encontrado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          grade
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al buscar el curso',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async update(id: number, updateGradeDto: UpdateGradeDto, user: JwtPayload) {

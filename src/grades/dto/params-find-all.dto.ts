@@ -1,15 +1,18 @@
+import { Type } from "class-transformer";
 import { IsInt, IsOptional, IsString } from "class-validator";
 
 export class ParamsFindAllDto {
     @IsInt({message: 'El limite debe ser un número'})
     @IsOptional()
-    limit: number;
+    @Type(() => Number)
+    limit: number = 10;
 
     @IsInt({message: 'El limite debe ser un número'})
     @IsOptional()
-    offset: number;
+    @Type(() => Number)
+    offset: number = 0;
 
     @IsString({message: 'El parámetro de búsqueda debe ser texto'})
     @IsOptional()
-    search: string;
+    search: string = '';
 }

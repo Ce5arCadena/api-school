@@ -39,10 +39,10 @@ export class GradesController {
     return this.gradesService.findAll(params, userAuth);
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.gradesService.findOne(+id);
-  // }
+  @Get('view/:id')
+  findOne(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.gradesService.findOne(id, userAuth);
+  }
 
   @Put(':id')
   update(@Param('id') id: number, @Body() updateGradeDto: UpdateGradeDto, @CurrentUser() userAuth: JwtPayload) {
