@@ -11,8 +11,8 @@ import { UsersService } from './users.service';
 import { UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CurrentUser, Public, Roles } from 'src/auth/decorator';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
+import { CurrentUser, Public, Roles } from 'src/auth/decorator';
 
 @Controller('users')
 export class UsersController {
@@ -29,12 +29,6 @@ export class UsersController {
   @Roles(UserRole.SUPERADMIN)
   createSchool(@Body() createUserDto: CreateUserDto, @CurrentUser() userAuth: JwtPayload) {
     return this.usersService.create(createUserDto, UserRole.SCHOOL, userAuth);
-  }
-
-  @Post('create-teacher')
-  @Roles(UserRole.SCHOOL)
-  createTeacher(@Body() createUserDto: CreateUserDto, @CurrentUser() userAuth: JwtPayload) {
-    return this.usersService.create(createUserDto, UserRole.TEACHER, userAuth);
   }
 
   @Get()

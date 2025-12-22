@@ -1,6 +1,15 @@
+import { 
+    Column, 
+    Entity, 
+    ManyToOne, 
+    JoinColumn, 
+    ManyToMany,
+    CreateDateColumn, 
+    UpdateDateColumn,
+    PrimaryGeneratedColumn, 
+} from "typeorm";
 import { Grade } from "src/grades/entities/grade.entity";
 import { School } from "src/schools/entities/school.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class Teacher {
@@ -16,9 +25,8 @@ export class Teacher {
     @Column({ type: 'varchar', length: '10'})
     phone: number;
 
-    @OneToOne(() => Grade)
-    @JoinColumn()
-    grade: Grade;
+    @ManyToMany(() => Grade, (grade) => grade.teachers)
+    grades: Grade[];
 
     @ManyToOne(() => School)
     @JoinColumn()

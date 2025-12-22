@@ -11,6 +11,7 @@ import { Grade } from './grades/entities/grade.entity';
 import { SchoolsModule } from './schools/schools.module';
 import { School } from './schools/entities/school.entity';
 import { TeachersModule } from './teachers/teachers.module';
+import { Teacher } from './teachers/entities/teacher.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { TeachersModule } from './teachers/teachers.module';
       username: 'root',
       password: 'root',
       database: 'school',
-      entities: [Grade, School, User],
+      entities: [Grade, School, User, Teacher],
       synchronize: true
     }),
     GradesModule,

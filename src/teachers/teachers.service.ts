@@ -1,12 +1,21 @@
-import { Injectable } from '@nestjs/common';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TeachersService {
   create(createTeacherDto: CreateTeacherDto, user: JwtPayload) {
-    return 'This action adds a new teacher';
+    try {
+      console.log(createTeacherDto);
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al crear el recurso',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   findAll() {

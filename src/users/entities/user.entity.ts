@@ -1,4 +1,3 @@
-import { Exclude } from "class-transformer";
 import { 
     Index, 
     Column, 
@@ -9,6 +8,7 @@ import {
     UpdateDateColumn, 
     PrimaryGeneratedColumn, 
 } from "typeorm";
+import { Exclude } from "class-transformer";
 import { School } from "src/schools/entities/school.entity";
 
 export enum UserRole {

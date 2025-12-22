@@ -26,7 +26,7 @@ export class UsersService {
       if (total >= 1) {
         return {
           message: 'No está permitido para ejecutar esta acción.',
-          status: HttpStatus.CONFLICT,
+          status: HttpStatus.UNAUTHORIZED,
           icon: 'error',
           errors: []
         };
@@ -57,15 +57,19 @@ export class UsersService {
     try {
       //Usuario autenticado
       const userAuth = await this.findByEmail(user.email);
+      if (!userAuth) {
+        return {
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: []
+        };
+      }
 
-      let userExist: User | null = null;
-      const conditions = {
-        email: createUserDto.email
-      };
+      let userExist = await this.userRepository.findOneBy({
+        email: createUserDto.email,
+      });
 
-      if (rol === UserRole.TEACHER || rol === UserRole.STUDENT) conditions['school'] = userAuth?.id;
-
-      userExist = await this.userRepository.findOneBy(conditions);
       if (userExist) {
         return {
           message: 'Por favor, elija otro correo.',
@@ -76,22 +80,17 @@ export class UsersService {
       };
 
       const passwordHash = await bcrypt.hash(createUserDto.password, 12);
+      const saveUser = await this.userRepository.save({ ...createUserDto, rol, password: passwordHash });
+      await this.schoolService.create({id: saveUser.id, name: createUserDto.name, user: saveUser });
+      const userSerialize = plainToInstance(User, saveUser);
 
-      if (rol === UserRole.SCHOOL) {
-        const saveUser = await this.userRepository.save({ ...createUserDto, rol, password: passwordHash });
-        await this.schoolService.create({id: saveUser.id, name: createUserDto.name, user: saveUser });
-        const userSerialize = plainToInstance(User, saveUser);
-
-        return {
-          message: 'Colegio creado.',
-          status: HttpStatus.CREATED,
-          icon: 'success',
-          errors: [],
-          data: userSerialize
-        };
-      } else {
-        //TODO: lógica de guardado de profesores
-      }
+      return {
+        message: 'Colegio creado.',
+        status: HttpStatus.CREATED,
+        icon: 'success',
+        errors: [],
+        data: userSerialize
+      };
     } catch (error) {
       throw new HttpException({
         message: 'Error al crear el recurso',

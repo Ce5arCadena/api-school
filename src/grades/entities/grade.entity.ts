@@ -4,11 +4,13 @@ import {
     Column,  
     ManyToOne, 
     JoinColumn,
+    ManyToMany,
     CreateDateColumn, 
     UpdateDateColumn, 
     PrimaryGeneratedColumn,
 } from "typeorm";
 import { School } from "src/schools/entities/school.entity";
+import { Teacher } from "src/teachers/entities/teacher.entity";
 
 @Entity()
 @Index(['name', 'school'], { unique: true })
@@ -21,6 +23,10 @@ export class Grade {
         length: 70
     })
     name: string;
+
+    @ManyToMany(() => Teacher, (teacher) => teacher.grades)
+    // @JoinColumn()
+    teachers: Teacher[];
 
     @ManyToOne(() => School)
     @JoinColumn()
