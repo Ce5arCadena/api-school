@@ -64,10 +64,76 @@ export class UsersService {
           icon: 'error',
           errors: []
         };
+      };
+
+      const conditions = {
+        email: createUserDto.email,
+      };
+
+      if (rol === UserRole.TEACHER) {
+        conditions['school'] = { id: userAuth.id };
+      }
+
+      let userExist = await this.userRepository.findOneBy(conditions);
+      if (userExist) {
+        return {
+          message: 'Por favor, elija otro correo.',
+          status: HttpStatus.CONFLICT,
+          icon: 'error',
+          errors: [`El correo (${createUserDto.email}), ya está en uso.`]
+        };
+      };
+
+      const passwordHash = await bcrypt.hash(createUserDto.password, 12);
+      const dataSave = {
+        ...createUserDto, 
+        rol, 
+        password: passwordHash
+      };
+
+      if (rol === UserRole.TEACHER) {
+        dataSave['school'] = userAuth.id;
+      }
+
+      const saveUser = await this.userRepository.save(dataSave);
+      if (rol === UserRole.SCHOOL) {
+        await this.schoolService.create({id: saveUser.id, name: createUserDto.name, user: saveUser });
+      }
+      const userSerialize = plainToInstance(User, saveUser);
+
+      return {
+        message: rol === UserRole.SCHOOL ? 'Colegio creado.' : 'Profesor Creado',
+        status: HttpStatus.CREATED,
+        icon: 'success',
+        errors: [],
+        data: userSerialize
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al crear el recurso',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async createSchool(createUserDto: CreateUserDto, rol: UserRole, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.findByEmail(user.email);
+      if (!userAuth) {
+        return {
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: []
+        };
       }
 
       let userExist = await this.userRepository.findOneBy({
         email: createUserDto.email,
+        school: {id: userAuth.id}
       });
 
       if (userExist) {
@@ -85,7 +151,7 @@ export class UsersService {
       const userSerialize = plainToInstance(User, saveUser);
 
       return {
-        message: 'Colegio creado.',
+        message: 'Profesor creado.',
         status: HttpStatus.CREATED,
         icon: 'success',
         errors: [],
