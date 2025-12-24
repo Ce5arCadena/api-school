@@ -6,7 +6,8 @@ import {
     JoinColumn, 
     CreateDateColumn, 
     UpdateDateColumn, 
-    PrimaryGeneratedColumn, 
+    PrimaryGeneratedColumn,
+    ManyToOne, 
 } from "typeorm";
 import { Exclude } from "class-transformer";
 import { School } from "src/schools/entities/school.entity";
@@ -38,7 +39,7 @@ export class User {
     })
     rol: string;
 
-    @OneToOne(() => School, { nullable: true })
+    @ManyToOne(() => School, { nullable: true })
     @JoinColumn()
     school: School;
 

@@ -171,8 +171,22 @@ export class UsersService {
     return `This action returns all users`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOneByCompany(email: string, schoolId: number) {
+    try {
+      return this.userRepository.findOne({
+        where: {
+          email,
+          school: { id: schoolId }
+        }
+      })
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al consultar el usuario',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.UNAUTHORIZED,
+      }, HttpStatus.UNAUTHORIZED);
+    };
   }
 
   // Busca un usuario por email.
@@ -189,8 +203,45 @@ export class UsersService {
     };
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto, user: JwtPayload) {
+    try {
+      const userAuth = await this.findByEmail(user.email);
+      if (!userAuth) {
+        return {
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: []
+        };
+      };
+
+      const userExist = await this.userRepository.findOneBy({ id });
+      if (!userExist) {
+        return {
+          message: 'No se encontró el usuario.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      // TODO:Validar el guardado del profesor y ver que pasa si manda un correo de un admin
+      const emailExist = await this.userRepository.findOneBy({ email: updateUserDto.email, school: { id: userAuth.id } });
+      if (emailExist?.id !== userExist.id) {
+        return {
+          message: 'No puede usar el correo especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      }
+
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al actualizar el usuario',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.UNAUTHORIZED,
+      }, HttpStatus.UNAUTHORIZED);
+    };
   }
 
   remove(id: number) {

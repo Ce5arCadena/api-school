@@ -2,6 +2,7 @@ import {
     Index, 
     Column, 
     Entity, 
+    OneToOne,
     ManyToOne, 
     JoinColumn, 
     ManyToMany,
@@ -9,6 +10,7 @@ import {
     UpdateDateColumn,
     PrimaryGeneratedColumn,
 } from "typeorm";
+import { User } from "src/users/entities/user.entity";
 import { Grade } from "src/grades/entities/grade.entity";
 import { School } from "src/schools/entities/school.entity";
 
@@ -33,6 +35,10 @@ export class Teacher {
     @ManyToOne(() => School)
     @JoinColumn()
     school: School;
+
+    @OneToOne(() => User)
+    @JoinColumn()
+    user: User;
 
     @Column({ default: 'ACTIVE' })
     isActive: string;

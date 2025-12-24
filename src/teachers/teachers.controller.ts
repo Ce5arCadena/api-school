@@ -1,8 +1,8 @@
 import { 
   Get, 
+  Put,
   Post, 
   Body, 
-  Patch, 
   Param, 
   Delete,
   UseGuards, 
@@ -37,9 +37,9 @@ export class TeachersController {
     return this.teachersService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTeacherDto: UpdateTeacherDto) {
-    return this.teachersService.update(+id, updateTeacherDto);
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateTeacherDto: UpdateTeacherDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.teachersService.update(id, updateTeacherDto, userAuth);
   }
 
   @Delete(':id')
