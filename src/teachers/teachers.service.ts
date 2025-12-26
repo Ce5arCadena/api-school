@@ -123,7 +123,7 @@ export class TeachersService {
         const userExist = await this.usersService.findOneByCompany(updateTeacherDto.email, userAuth.id);
         if (userExist?.id !== teacherExist.user.id) {
           return {
-            message: 'Ya existe un profesor con el mismo correo.',
+            message: 'No puedes usar este correo. Ingresa otro.',
             status: HttpStatus.NOT_FOUND,
             icon: 'error',
           };
@@ -138,11 +138,6 @@ export class TeachersService {
 
         await this.usersService.update(userExist.id, dataUpdateUser, user);
       }
-
-
-      // if (updateTeacherDto.email || updateTeacherDto.password) {
-      //   await this.usersService.create({email: createTeacherDto.email, name: createTeacherDto.fullName, password: createTeacherDto.password}, UserRole.TEACHER, user);
-      // };
 
       delete updateTeacherDto.email;
       delete updateTeacherDto.password;
