@@ -49,7 +49,6 @@ export class AuthService {
         }
       };
     } catch (error) {
-      console.log(error)
       throw new HttpException({
         message: 'Error al ejecutar esta acción.',
         icon: 'error',

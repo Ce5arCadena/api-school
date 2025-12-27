@@ -23,7 +23,6 @@ export class SchoolsService {
           errors: [`El nombre (${createSchoolDto.name}), ya está en uso.`]
         };
       };
-      console.log(createSchoolDto)
 
       const newSchool = await this.schoolRepository.save(createSchoolDto);
 

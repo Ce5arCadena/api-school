@@ -8,7 +8,6 @@ export const Public = () => SetMetadata(ISPUBLICKEY, true);
 export const CurrentUser = createParamDecorator(
     (data: string, ctx: ExecutionContext) => {
         const user = ctx.switchToHttp().getRequest().userAuth;
-        console.log(user);
 
         if (!user) return null;
 

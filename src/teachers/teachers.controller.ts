@@ -4,6 +4,7 @@ import {
   Post, 
   Body, 
   Param, 
+  Query,
   Delete,
   UseGuards, 
   Controller,
@@ -15,6 +16,7 @@ import { UserRole } from 'src/users/entities/user.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { ParamsTeacherDto } from './dto/params-teacher.dto';
 
 @Controller('teachers')
 @UseGuards(AuthGuard)
@@ -28,8 +30,8 @@ export class TeachersController {
   }
 
   @Get()
-  findAll() {
-    return this.teachersService.findAll();
+  findAll(@Query() params: ParamsTeacherDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.teachersService.findAll(params, userAuth);
   }
 
   @Get(':id')

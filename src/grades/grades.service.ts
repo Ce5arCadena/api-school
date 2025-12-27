@@ -4,23 +4,16 @@ import {
   HttpException, 
   UnauthorizedException, 
 } from '@nestjs/common';
+import { ILike, Repository } from 'typeorm';
 import { Grade } from './entities/grade.entity';
+import { GradeQuery } from 'src/utils/interfaces';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { UsersService } from 'src/users/users.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
-import { FindOperator, ILike, Repository } from 'typeorm';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { ParamsFindAllDto } from './dto/params-find-all.dto';
-
-interface GradeQuery {
-  school: {
-    id: number
-  },
-  isActive: string,
-  name?: FindOperator<string>
-}
 
 @Injectable()
 export class GradesService {
@@ -61,7 +54,6 @@ export class GradesService {
         data: gradeSerialize
       };
     } catch (error) {
-      console.log(error)
       throw new HttpException({
         message: 'Error al crear el curso',
         icon: 'error',
@@ -234,14 +226,13 @@ export class GradesService {
         };
       };
 
-      const gradeUpdateState = await this.gradeRepository.update({ id }, { isActive: 'INACTIVE' });
+      await this.gradeRepository.update({ id }, { isActive: 'INACTIVE' });
       return {
         message: 'Curso eliminado.',
         status: HttpStatus.OK,
         icon: 'success',
       };
     } catch (error) {
-      console.log(error)
       throw new HttpException({
         message: 'Error al eliminar el curso',
         icon: 'error',

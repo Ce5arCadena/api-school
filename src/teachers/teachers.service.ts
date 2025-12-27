@@ -4,15 +4,18 @@ import {
   HttpException, 
   UnauthorizedException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import bcrypt from 'node_modules/bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Teacher } from './entities/teacher.entity';
+import { TeacherQuery } from 'src/utils/interfaces';
 import { UsersService } from 'src/users/users.service';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
-import { UserRole } from 'src/users/entities/user.entity';
+import { User, UserRole } from 'src/users/entities/user.entity';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { ParamsTeacherDto } from './dto/params-teacher.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class TeachersService {
@@ -84,8 +87,56 @@ export class TeachersService {
     };
   }
 
-  findAll() {
-    return `This action returns all teachers`;
+  async findAll(params: ParamsTeacherDto, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+  
+      const query = this.teacherRepository.createQueryBuilder('teacher').where('teacher.isActive = :status', { status: 'ACTIVE'})
+        .andWhere('teacher.schoolId = :schoolId', { schoolId: userAuth.id });
+
+      if (params.search) {
+        query.andWhere(
+          `(teacher.phone LIKE :search
+          OR teacher.fullName LIKE :search
+          OR teacher.document LIKE :search)`,
+          { search: `%${params.search.trim()}%`}
+        );
+      };
+
+      const [teachers, totalTeachers] = await query.orderBy('teacher.created', 'ASC')
+        .skip(params.offset)
+        .take(params.limit)
+        .leftJoinAndSelect('teacher.user', 'user')
+        .leftJoinAndSelect('teacher.school', 'school')
+        .getManyAndCount();
+
+      const teachersSerialize = plainToInstance(User, teachers);
+
+      return {
+        message: 'Lista de profesores.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          teachers: teachersSerialize,
+          total: totalTeachers
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al consultar los profesores',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   findOne(id: number) {
