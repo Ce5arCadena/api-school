@@ -43,7 +43,7 @@ export class TeachersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.teachersService.remove(+id);
+  remove(@Param('id') id:number, @CurrentUser() userAuth: JwtPayload) {
+    return this.teachersService.remove(id, userAuth);
   }
 }

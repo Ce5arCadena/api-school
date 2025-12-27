@@ -107,9 +107,10 @@ export class TeachersService {
       const teacherExist = await this.teacherRepository.findOne({
         where: {
           id,
-          school: { id: userAuth.id }
+          school: { id: userAuth.id },
+          isActive: 'ACTIVE'
         },
-        relations: ["user"]
+        relations: ["user"],
       });
       if (!teacherExist) {
         return {
@@ -148,7 +149,6 @@ export class TeachersService {
         icon: 'success',
       };
     } catch (error) {
-      console.log(error)
       throw new HttpException({
         message: 'Error al editar el profesor',
         icon: 'error',
@@ -158,7 +158,52 @@ export class TeachersService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} teacher`;
+  async remove(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const teacherExist = await this.teacherRepository.findOne({
+        where: {
+          id,
+          school: { id: userAuth.id },
+          isActive: 'ACTIVE'
+        }
+      });
+      if (!teacherExist) {
+        return {
+          message: 'No se encontró el profesor.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      const teacherUpdate = await this.teacherRepository.update({
+        id: teacherExist.id,
+        school: { id: userAuth.id }
+      }, {
+        isActive: 'INACTIVE'
+      });
+
+      return {
+        message: 'Profesor eliminado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al eliminar el profesor',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 }
