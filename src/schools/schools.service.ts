@@ -1,11 +1,15 @@
 import { Like, Repository } from 'typeorm';
 import { School } from './entities/school.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SchoolQuery } from 'src/utils/interfaces';
+import { plainToInstance } from 'class-transformer';
+import { User } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
+import { ParamsSchoolDto } from './dto/params-school.dto';
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class SchoolsService {
@@ -47,8 +51,51 @@ export class SchoolsService {
     }
   }
 
-  findAll() {
-    return `This action returns all schools`;
+  async findAll(params: ParamsSchoolDto, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.userService.findByEmail(user.email);
+      if (!userAuth) {
+        return {
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: []
+        };
+      };
+
+      const conditions: SchoolQuery = {
+        isActive: 'ACTIVE',
+      }
+
+      if (params.search) conditions.name = Like(`%${params.search.trim()}%`);
+
+      const [schools, totalSchools] = await this.schoolRepository.findAndCount({
+        where: conditions,
+        skip: params.offset,
+        take: params.limit,
+        relations: ['user']
+      });
+
+      const schoolsFormat = plainToInstance(User, schools);
+
+      return {
+        message: 'Lista de colegios.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          schools: schoolsFormat,
+          total: totalSchools
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al listar lso colegios',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   findOne(id: number) {
