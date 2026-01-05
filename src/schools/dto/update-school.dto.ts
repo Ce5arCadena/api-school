@@ -1,4 +1,7 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateSchoolDto } from './create-school.dto';
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export class UpdateSchoolDto extends PartialType(CreateSchoolDto) {}
+export class UpdateSchoolDto {
+    @IsString({ message: 'El nombre es requerido'})
+    @IsNotEmpty({ message: 'El nombre es requerido'})
+    name: string;
+}

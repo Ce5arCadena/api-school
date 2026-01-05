@@ -7,13 +7,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserRole } from './entities/user.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { SchoolsService } from 'src/schools/schools.service';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @Inject(forwardRef(() => SchoolsService))
     private schoolService: SchoolsService
   ) {}
 
