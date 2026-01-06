@@ -19,7 +19,6 @@ import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { ParamsTeacherDto } from './dto/params-teacher.dto';
 
 @Controller('teachers')
-@UseGuards(AuthGuard)
 @Roles(UserRole.SCHOOL)
 export class TeachersController {
   constructor(private readonly teachersService: TeachersService) {}
