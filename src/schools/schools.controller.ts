@@ -32,8 +32,8 @@ export class SchoolsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.schoolsService.findOne(+id);
+  findOne(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.schoolsService.findOne(id, userAuth);
   }
 
   @Put(':id')
@@ -43,7 +43,7 @@ export class SchoolsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.schoolsService.remove(+id);
+  remove(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.schoolsService.remove(id, userAuth);
   }
 }

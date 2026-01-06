@@ -90,7 +90,7 @@ export class SchoolsService {
       };
     } catch (error) {
       throw new HttpException({
-        message: 'Error al listar lso colegios',
+        message: 'Error al listar los colegios',
         icon: 'error',
         errors: [error],
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -98,8 +98,52 @@ export class SchoolsService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} school`;
+  async findOne(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.userService.findByEmail(user.email);
+      if (!userAuth) {
+        return {
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: []
+        };
+      };
+
+      const schoolExist = await this.schoolRepository.findOne({
+        where: { 
+          id, 
+          isActive: 'ACTIVE'
+        },
+        relations: ['user']
+      });
+      if (!schoolExist) {
+        return {
+          message: 'El colegio no existe.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      const formatSchool = plainToInstance(User, schoolExist);
+
+      return {
+        message: 'Colegio encontrado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          schools: formatSchool,
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al obtener el colegio',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   async update(id: number, updateSchoolDto: UpdateSchoolDto, user: JwtPayload) {
@@ -150,7 +194,41 @@ export class SchoolsService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} school`;
+  async remove(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.userService.findByEmail(user.email);
+      if (!userAuth) {
+        return {
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+          errors: []
+        };
+      };
+
+      const schoolExist = await this.schoolRepository.findOneBy({ id, isActive: 'ACTIVE' });
+      if (!schoolExist) {
+        return {
+          message: 'El colegio no existe.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      await this.schoolRepository.update({ id }, { isActive: 'INACTIVE' });
+      return {
+        message: 'Colegio eliminado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al eliminar el colegio',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 }
