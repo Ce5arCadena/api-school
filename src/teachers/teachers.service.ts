@@ -4,18 +4,17 @@ import {
   HttpException, 
   UnauthorizedException,
 } from '@nestjs/common';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import bcrypt from 'node_modules/bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Teacher } from './entities/teacher.entity';
-import { TeacherQuery } from 'src/utils/interfaces';
+import { plainToInstance } from 'class-transformer';
 import { UsersService } from 'src/users/users.service';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
-import { User, UserRole } from 'src/users/entities/user.entity';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { ParamsTeacherDto } from './dto/params-teacher.dto';
-import { plainToInstance } from 'class-transformer';
+import { User, UserRole } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class TeachersService {

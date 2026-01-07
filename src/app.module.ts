@@ -11,8 +11,9 @@ import { Grade } from './grades/entities/grade.entity';
 import { SchoolsModule } from './schools/schools.module';
 import { School } from './schools/entities/school.entity';
 import { TeachersModule } from './teachers/teachers.module';
-import { Teacher } from './teachers/entities/teacher.entity';
 import { StudentsModule } from './students/students.module';
+import { Teacher } from './teachers/entities/teacher.entity';
+import { Student } from './students/entities/student.entity';
 
 @Module({
   imports: [
@@ -24,15 +25,15 @@ import { StudentsModule } from './students/students.module';
       username: 'root',
       password: 'root',
       database: 'school',
-      entities: [Grade, School, User, Teacher],
+      entities: [Grade, School, User, Teacher, Student],
       synchronize: true
     }),
+    AuthModule,
+    UsersModule,
     GradesModule,
     SchoolsModule,
-    UsersModule,
-    AuthModule,
+    StudentsModule,
     TeachersModule,
-    StudentsModule
   ],
   controllers: [AppController],
   providers: [AppService],

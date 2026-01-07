@@ -1,5 +1,6 @@
-import { Roles } from 'src/auth/decorator';
 import { StudentsService } from './students.service';
+import { CurrentUser, Roles } from 'src/auth/decorator';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { UserRole } from 'src/users/entities/user.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -11,8 +12,8 @@ export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
 
   @Post()
-  create(@Body() createStudentDto: CreateStudentDto) {
-    return this.studentsService.create(createStudentDto);
+  create(@Body() createStudentDto: CreateStudentDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.studentsService.create(createStudentDto, userAuth);
   }
 
   @Get()
