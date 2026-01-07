@@ -41,9 +41,9 @@ export class StudentsService {
         };
       };
 
-      const findStudentByDocument = await this.studentsRepository.findOne({
+      const existStudentByDocument = await this.studentsRepository.findOne({
         where: {
-          document: createStudentDto.document,
+          document: createStudentDto.document.trim(),
           school: {
             id: userAuth.id
           },
@@ -53,7 +53,7 @@ export class StudentsService {
           isActive: 'ACTIVE'
         }
       });
-      if (findStudentByDocument) {
+      if (existStudentByDocument) {
         return {
           message: 'Ya existe un estudiante con el mismo documento en el mismo grado',
           status: HttpStatus.CONFLICT,
@@ -96,8 +96,78 @@ export class StudentsService {
     return `This action returns a #${id} student`;
   }
 
-  update(id: number, updateStudentDto: UpdateStudentDto) {
-    return `This action updates a #${id} student`;
+  async update(id: number, updateStudentDto: UpdateStudentDto, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const student = await this.studentsRepository.findOneBy({ id, school: { id: userAuth.id }});
+      if (!student) {
+        return {
+          message: 'No existe el estudiante especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      const updateData: Partial<Student> = {};
+      if (updateStudentDto.grade) {
+        const gradeExist = await this.gradeRepository.findOneBy({ id: updateStudentDto.grade, school: { id: userAuth.id }, isActive: 'ACTIVE' });
+        if (!gradeExist) {
+          return {
+            message: 'No existe el grado especificado',
+            status: HttpStatus.NOT_FOUND,
+            icon: 'error',
+          };
+        };
+        updateData.grade = gradeExist;
+      };
+      if (updateStudentDto.name) updateData.name = updateStudentDto.name.trim();
+      if (updateStudentDto.lastname) updateData.lastname = updateStudentDto.lastname.trim();
+      if (updateStudentDto.document) {
+        const existStudentByDocument = await this.studentsRepository.findOne({
+          where: {
+            document: updateStudentDto.document.trim(),
+            school: {
+              id: userAuth.id
+            },
+            isActive: 'ACTIVE'
+          }
+        });
+
+        if (existStudentByDocument && existStudentByDocument.id !== id) {
+          return {
+            message: 'Ya existe un estudiante con el mismo documento en el mismo grado',
+            status: HttpStatus.CONFLICT,
+            icon: 'error',
+          };
+        };
+
+        updateData.document = updateStudentDto.document.trim();
+      };
+      if (updateStudentDto.phone) updateData.phone = updateStudentDto.phone.trim();
+
+      await this.studentsRepository.update(id, updateData);
+      return {
+        message: 'Estudiante actualizado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al actualizar el estudiante.',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   remove(id: number) {

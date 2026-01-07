@@ -4,7 +4,7 @@ import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { UserRole } from 'src/users/entities/user.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 
 @Controller('students')
 @Roles(UserRole.SCHOOL)
@@ -26,9 +26,9 @@ export class StudentsController {
     return this.studentsService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
-    return this.studentsService.update(+id, updateStudentDto);
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateStudentDto: UpdateStudentDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.studentsService.update(id, updateStudentDto, userAuth);
   }
 
   @Delete(':id')
