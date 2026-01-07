@@ -6,11 +6,9 @@ import {
   Param, 
   Query,
   Delete,
-  UseGuards, 
   Controller,
 } from '@nestjs/common';
 import { TeachersService } from './teachers.service';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser, Roles } from 'src/auth/decorator';
 import { UserRole } from 'src/users/entities/user.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';

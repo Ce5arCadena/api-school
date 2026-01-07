@@ -17,6 +17,7 @@ import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { ParamsSchoolDto } from './dto/params-school.dto';
 
 @Controller('schools')
+@Roles(UserRole.SUPERADMIN)
 export class SchoolsController {
   constructor(private readonly schoolsService: SchoolsService) {}
 
@@ -37,7 +38,6 @@ export class SchoolsController {
   }
 
   @Put(':id')
-  @Roles(UserRole.SUPERADMIN)
   update(@Param('id') id: number, @Body() updateSchoolDto: UpdateSchoolDto, @CurrentUser() userAuth: JwtPayload) {
     return this.schoolsService.update(id, updateSchoolDto, userAuth);
   }
