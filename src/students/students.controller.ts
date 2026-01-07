@@ -1,10 +1,20 @@
-import { StudentsService } from './students.service';
+import { 
+  Put, 
+  Get, 
+  Post, 
+  Body, 
+  Query, 
+  Param, 
+  Delete, 
+  Controller, 
+} from '@nestjs/common';
+import { QueryParamsBase    } from 'src/utils/dtos';
+import { StudentsService    } from './students.service';
 import { CurrentUser, Roles } from 'src/auth/decorator';
-import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
-import { UserRole } from 'src/users/entities/user.entity';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { CreateStudentDto   } from './dto/create-student.dto';
+import { UpdateStudentDto   } from './dto/update-student.dto';
+import { JwtPayload         } from 'src/auth/dto/jwt-payload.dto';
+import { UserRole           } from 'src/users/entities/user.entity';
 
 @Controller('students')
 @Roles(UserRole.SCHOOL)
@@ -17,13 +27,13 @@ export class StudentsController {
   }
 
   @Get()
-  findAll() {
-    return this.studentsService.findAll();
+  findAll(@Query() params: QueryParamsBase, @CurrentUser() userAuth: JwtPayload) {
+    return this.studentsService.findAll(params, userAuth);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.studentsService.findOne(+id);
+  findOne(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.studentsService.findOne(id, userAuth);
   }
 
   @Put(':id')
@@ -32,7 +42,7 @@ export class StudentsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.studentsService.remove(+id);
+  remove(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.studentsService.remove(id, userAuth);
   }
 }

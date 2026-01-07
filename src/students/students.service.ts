@@ -7,6 +7,7 @@ import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { QueryParamsBase } from 'src/utils/dtos';
 
 @Injectable()
 export class StudentsService {
@@ -88,12 +89,103 @@ export class StudentsService {
     };
   }
 
-  findAll() {
-    return `This action returns all students`;
+  async findAll(params: QueryParamsBase, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const query = this.studentsRepository.createQueryBuilder('student')
+        .where('student.isActive = :status', { status: 'ACTIVE'})
+        .andWhere('student.schoolId = :schoolId', { schoolId: userAuth.id });
+
+      if (params.search) {
+        query.andWhere(
+          `(student.name LIKE :search
+          OR student.lastname LIKE :search
+          OR student.document LIKE :search
+          OR student.phone LIKE :search
+          )`,
+          { search: `%${params.search.trim()}%`}
+        )
+      };
+
+      const [students, totalStudents] = await query.orderBy('student.created', 'ASC')
+        .skip(params.offset)
+        .take(params.limit)
+        .leftJoinAndSelect('student.grade', 'grade')
+        .leftJoinAndSelect('student.school', 'school')
+        .getManyAndCount();
+
+      return {
+        message: 'Lista de estudiantes.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          students,
+          total: totalStudents
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al listar los estudiantes.',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} student`;
+  async findOne(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const student = await this.studentsRepository.findOne({
+        where: { 
+          id, 
+          school: { id: userAuth.id }, 
+          isActive: 'ACTIVE' 
+        },
+        relations: ['grade', 'school']
+      });
+      if (!student) {
+        return {
+          message: 'No existe el estudiante especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      return {
+        message: 'Estudiante encontrado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          student
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al obtener el estudiante.',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   async update(id: number, updateStudentDto: UpdateStudentDto, user: JwtPayload) {
@@ -108,7 +200,7 @@ export class StudentsService {
         });
       };
 
-      const student = await this.studentsRepository.findOneBy({ id, school: { id: userAuth.id }});
+      const student = await this.studentsRepository.findOneBy({ id, school: { id: userAuth.id }, isActive: 'ACTIVE'});
       if (!student) {
         return {
           message: 'No existe el estudiante especificado.',
@@ -170,7 +262,40 @@ export class StudentsService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} student`;
+  async remove(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const student = await this.studentsRepository.findOneBy({ id, school: { id: userAuth.id }, isActive: 'ACTIVE'});
+      if (!student) {
+        return {
+          message: 'No existe el estudiante especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      await this.studentsRepository.update(id, { isActive: 'INACTIVE' });
+      return {
+        message: 'Estudiante eliminado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al eliminar el estudiante.',
+        icon: 'error',
+        errors: [error],
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 }
