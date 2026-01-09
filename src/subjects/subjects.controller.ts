@@ -6,9 +6,11 @@ import {
   Param, 
   Delete, 
   Controller,
+  Query,
 } from '@nestjs/common';
-import { CurrentUser, Roles } from 'src/auth/decorator';
+import { QueryParamsBase } from 'src/utils/dtos';
 import { SubjectsService } from './subjects.service';
+import { CurrentUser, Roles } from 'src/auth/decorator';
 import { UserRole } from 'src/users/entities/user.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateSubjectDto } from './dto/create-subject.dto';
@@ -25,13 +27,16 @@ export class SubjectsController {
   }
 
   @Get()
-  findAll() {
-    return this.subjectsService.findAll();
+  findAll(
+    @Query() params: QueryParamsBase,
+    @CurrentUser() userAuth: JwtPayload
+  ) {
+    return this.subjectsService.findAll(params, userAuth);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subjectsService.findOne(+id);
+  findOne(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.subjectsService.findOne(id, userAuth);
   }
 
   @Put(':id')
@@ -40,7 +45,7 @@ export class SubjectsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.subjectsService.remove(+id);
+  remove(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.subjectsService.remove(id, userAuth);
   }
 }

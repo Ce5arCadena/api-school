@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { QueryParamsBase } from 'src/utils/dtos';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Subject } from './entities/subject.entity';
 import { UsersService } from 'src/users/users.service';
@@ -109,12 +110,95 @@ export class SubjectsService {
     };
   }
 
-  findAll() {
-    return `This action returns all subjects`;
+  async findAll(params: QueryParamsBase, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const querySubjects = this.subjectRepository.createQueryBuilder('subject')
+        .where('subject.isActive = :isActive', { isActive: 'ACTIVE' })
+        .andWhere('subject.schoolId = :schoolId', { schoolId: userAuth.id });
+
+      if (params.search) {
+        querySubjects.andWhere(
+          `(
+            subject.name LIKE :search
+          )`,
+          { search: `%${params.search.trim()}%`}
+        );
+      };
+
+      const [subjects, totalSubjects] = await querySubjects.orderBy('subject.created', 'ASC')
+        .skip(params.offset)
+        .take(params.limit)
+        .leftJoinAndSelect('subject.grade', 'grade')
+        .leftJoinAndSelect('subject.teacher', 'teacher')
+        .getManyAndCount();
+
+      return {
+        message: 'Lista de asignaturas.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          subjects,
+          total: totalSubjects
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al listar las asignaturas.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} subject`;
+  async findOne(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const subject = await this.subjectRepository.findOne({
+        where: { id, school: { id: userAuth.id }, isActive: 'ACTIVE' },
+        relations: ['grade', 'teacher']
+      });
+      if (!subject) {
+        return {
+          message: 'La asignatura especificada no existe.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      return {
+        message: 'Asignatura encontrada.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          subject
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al obtener la asignatura.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   async update(id: number, updateSubjectDto: UpdateSubjectDto, user: JwtPayload) {
@@ -129,7 +213,7 @@ export class SubjectsService {
         });
       };
 
-      const subject = await this.subjectRepository.findOneBy({ id });
+      const subject = await this.subjectRepository.findOneBy({ id, school: { id: userAuth.id }, isActive: 'ACTIVE' });
       if (!subject) {
         return {
           message: 'La asignatura especificada no existe.',
@@ -140,7 +224,7 @@ export class SubjectsService {
 
       const dataUpdate: Partial<Subject> = {};
       if (updateSubjectDto.name) {
-        const subjectByName = await this.subjectRepository.findOneBy({ name: updateSubjectDto.name, school: { id: userAuth.id } });
+        const subjectByName = await this.subjectRepository.findOneBy({ name: updateSubjectDto.name, school: { id: userAuth.id }, isActive: 'ACTIVE' });
         if (subjectByName && subjectByName.id !== subject.id) {
           return {
             message: 'Ya existe una materia con el mismo nombre',
@@ -206,7 +290,41 @@ export class SubjectsService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} subject`;
+  async remove(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const subject = await this.subjectRepository.findOne({
+        where: { id, school: { id: userAuth.id }, isActive: 'ACTIVE' },
+      });
+      if (!subject) {
+        return {
+          message: 'La asignatura especificada no existe.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      await this.subjectRepository.update(id, { isActive: 'INACTIVE' });
+      return {
+        message: 'Asignatura eliminada.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al eliminar la asignatura.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 }
