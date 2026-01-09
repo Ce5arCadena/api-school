@@ -11,9 +11,13 @@ import { Grade } from './grades/entities/grade.entity';
 import { SchoolsModule } from './schools/schools.module';
 import { School } from './schools/entities/school.entity';
 import { TeachersModule } from './teachers/teachers.module';
+import { SubjectsModule } from './subjects/subjects.module';
 import { StudentsModule } from './students/students.module';
 import { Teacher } from './teachers/entities/teacher.entity';
 import { Student } from './students/entities/student.entity';
+import { Subject } from './subjects/entities/subject.entity';
+import { RegistryPointsModule } from './registry-points/registry-points.module';
+import { PointCategoriesModule } from './point-categories/point-categories.module';
 
 @Module({
   imports: [
@@ -25,7 +29,7 @@ import { Student } from './students/entities/student.entity';
       username: 'root',
       password: 'root',
       database: 'school',
-      entities: [Grade, School, User, Teacher, Student],
+      entities: [Grade, School, User, Teacher, Student, Subject],
       synchronize: true
     }),
     AuthModule,
@@ -34,6 +38,9 @@ import { Student } from './students/entities/student.entity';
     SchoolsModule,
     StudentsModule,
     TeachersModule,
+    PointCategoriesModule,
+    RegistryPointsModule,
+    SubjectsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

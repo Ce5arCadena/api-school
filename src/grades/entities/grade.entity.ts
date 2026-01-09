@@ -3,6 +3,7 @@ import {
     Entity, 
     Column,  
     ManyToOne, 
+    OneToMany,
     JoinColumn,
     ManyToMany,
     CreateDateColumn, 
@@ -11,6 +12,7 @@ import {
 } from "typeorm";
 import { School } from "src/schools/entities/school.entity";
 import { Teacher } from "src/teachers/entities/teacher.entity";
+import { Student } from "src/students/entities/student.entity";
 
 @Entity()
 @Index(['name', 'school'], { unique: true })
@@ -24,9 +26,11 @@ export class Grade {
     })
     name: string;
 
-    @ManyToMany(() => Teacher, (teacher) => teacher.grades)
-    // @JoinColumn()
-    teachers: Teacher[];
+    // @ManyToMany(() => Teacher, (teacher) => teacher.grades)
+    // teachers: Teacher[];
+
+    @OneToMany(() => Student, (student) => student.grade)
+    students: Student[];
 
     @ManyToOne(() => School)
     @JoinColumn()

@@ -29,8 +29,8 @@ export class Teacher {
     @Column({ type: 'varchar', length: 10})
     phone: string;
 
-    @ManyToMany(() => Grade, (grade) => grade.teachers)
-    grades: Grade[];
+    // @ManyToMany(() => Grade, (grade) => grade.teachers)
+    // grades: Grade[];
 
     @ManyToOne(() => School)
     @JoinColumn()
