@@ -1,9 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete, 
+  Controller, 
+} from '@nestjs/common';
+import { CurrentUser, Roles } from 'src/auth/decorator';
 import { SubjectsService } from './subjects.service';
+import { UserRole } from 'src/users/entities/user.entity';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
-import { Roles } from 'src/auth/decorator';
-import { UserRole } from 'src/users/entities/user.entity';
 
 @Controller('subjects')
 @Roles(UserRole.SCHOOL)
@@ -11,8 +20,8 @@ export class SubjectsController {
   constructor(private readonly subjectsService: SubjectsService) {}
 
   @Post()
-  create(@Body() createSubjectDto: CreateSubjectDto) {
-    return this.subjectsService.create(createSubjectDto);
+  create(@Body() createSubjectDto: CreateSubjectDto,@CurrentUser() userAuth: JwtPayload) {
+    return this.subjectsService.create(createSubjectDto, userAuth);
   }
 
   @Get()
