@@ -13,6 +13,7 @@ import {
 import { School } from "src/schools/entities/school.entity";
 import { Teacher } from "src/teachers/entities/teacher.entity";
 import { Student } from "src/students/entities/student.entity";
+import { Subject } from "src/subjects/entities/subject.entity";
 
 @Entity()
 @Index(['name', 'school'], { unique: true })
@@ -35,6 +36,9 @@ export class Grade {
     @ManyToOne(() => School)
     @JoinColumn()
     school: School;
+
+    @OneToMany(() => Subject, (subject) => subject.grade)
+    subjects: Subject[];
 
     @Column({ default: 'ACTIVE' })
     isActive: string;

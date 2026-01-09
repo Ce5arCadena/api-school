@@ -2,8 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { SubjectsService } from './subjects.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
+import { Roles } from 'src/auth/decorator';
+import { UserRole } from 'src/users/entities/user.entity';
 
 @Controller('subjects')
+@Roles(UserRole.SCHOOL)
 export class SubjectsController {
   constructor(private readonly subjectsService: SubjectsService) {}
 
