@@ -1,9 +1,15 @@
-import { Grade } from "src/grades/entities/grade.entity";
+import {
+    Column, 
+    Entity, 
+    ManyToOne, 
+    OneToMany, 
+    PrimaryGeneratedColumn,
+} from "typeorm";
 import { School } from "src/schools/entities/school.entity";
-import { Column, Entity, Index, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Subject } from "src/subjects/entities/subject.entity";
+import { RegistryPoint } from "src/registry-points/entities/registry-point.entity";
 
 @Entity()
-@Index()
 export class PointCategory {
     @PrimaryGeneratedColumn()
     id: number;
@@ -12,10 +18,14 @@ export class PointCategory {
     name: string;
 
     @Column({type: 'int'})
-    maximunPoints: number;
+    maxPoints: number;
 
-    @OneToOne(() => Grade)
-    grade: Grade;
+    @ManyToOne(() => Subject, (subject) => subject.pointCategories)
+    subject: Subject;
 
+    @OneToMany(() => RegistryPoint, (registryPoint) => registryPoint.pointCategory)
+    registryPoints: RegistryPoint[];
+
+    @ManyToOne(() => School)
     school: School;
 }

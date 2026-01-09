@@ -3,12 +3,14 @@ import {
     Column, 
     Entity, 
     ManyToOne, 
+    OneToMany, 
     CreateDateColumn, 
     UpdateDateColumn,
-    PrimaryGeneratedColumn, 
+    PrimaryGeneratedColumn,
 } from "typeorm";
 import { Grade } from "src/grades/entities/grade.entity";
 import { School } from "src/schools/entities/school.entity";
+import { RegistryPoint } from "src/registry-points/entities/registry-point.entity";
 
 @Entity()
 @Index(['document', 'school'], { unique: true })
@@ -27,6 +29,9 @@ export class Student {
 
     @Column()
     phone: string;
+
+    @OneToMany(() => RegistryPoint, registryPoint => registryPoint.student)
+    registryPoints: RegistryPoint[];
 
     @ManyToOne(() => Grade)
     grade: Grade;
