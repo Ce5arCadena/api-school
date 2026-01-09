@@ -117,8 +117,93 @@ export class SubjectsService {
     return `This action returns a #${id} subject`;
   }
 
-  update(id: number, updateSubjectDto: UpdateSubjectDto) {
-    return `This action updates a #${id} subject`;
+  async update(id: number, updateSubjectDto: UpdateSubjectDto, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const subject = await this.subjectRepository.findOneBy({ id });
+      if (!subject) {
+        return {
+          message: 'La asignatura especificada no existe.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      const dataUpdate: Partial<Subject> = {};
+      if (updateSubjectDto.name) {
+        const subjectByName = await this.subjectRepository.findOneBy({ name: updateSubjectDto.name, school: { id: userAuth.id } });
+        if (subjectByName && subjectByName.id !== subject.id) {
+          return {
+            message: 'Ya existe una materia con el mismo nombre',
+            status: HttpStatus.CONFLICT,
+            icon: 'error',
+          };
+        };
+        dataUpdate.name = updateSubjectDto.name.trim();
+      };
+
+      if (updateSubjectDto.grade) {
+        const gradeExists = await this.gradeRepository.findOne({
+          where: {
+            id: updateSubjectDto.grade,
+            isActive: 'ACTIVE',
+            school: {
+              id: userAuth.id
+            }
+          },
+        });
+        if (!gradeExists) {
+          return {
+            message: 'El curso especificado no existe.',
+            status: HttpStatus.NOT_FOUND,
+            icon: 'error',
+          };
+        };
+        dataUpdate.grade = gradeExists;
+      };
+
+      if (updateSubjectDto.teacher) {
+        const teacherExists = await this.teacherRepository.findOne({
+          where: {
+            id: updateSubjectDto.teacher,
+            isActive: 'ACTIVE',
+            school: {
+              id: userAuth.id
+            }
+          },
+        });
+        if (!teacherExists) {
+          return {
+            message: 'El profesor especificado no existe.',
+            status: HttpStatus.NOT_FOUND,
+            icon: 'error',
+          };
+        };
+        dataUpdate.teacher = teacherExists;
+      };
+
+      await this.subjectRepository.update(id, dataUpdate);
+      return {
+        message: 'Asignatura actualizada.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al actualizar la asignatura',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   remove(id: number) {

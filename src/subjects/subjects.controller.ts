@@ -1,11 +1,11 @@
 import { 
   Get, 
+  Put, 
   Post, 
-  Body, 
-  Patch, 
+  Body,
   Param, 
   Delete, 
-  Controller, 
+  Controller,
 } from '@nestjs/common';
 import { CurrentUser, Roles } from 'src/auth/decorator';
 import { SubjectsService } from './subjects.service';
@@ -34,9 +34,9 @@ export class SubjectsController {
     return this.subjectsService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSubjectDto: UpdateSubjectDto) {
-    return this.subjectsService.update(+id, updateSubjectDto);
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateSubjectDto: UpdateSubjectDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.subjectsService.update(id, updateSubjectDto, userAuth);
   }
 
   @Delete(':id')
