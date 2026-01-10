@@ -193,7 +193,17 @@ export class UsersService {
   // Busca un usuario por email.
   async findByEmail(email: string): Promise<User | null> {
     try {
-      return this.userRepository.findOneBy({email});
+      const user = this.userRepository.findOne({
+        where: { 
+          email,
+          isActive: 'ACTIVE',
+        },
+        relations: ['school']
+      });
+
+      if (!user) return null;
+
+      return user; 
     } catch (error) {
       throw new HttpException({
         message: 'Error al consultar el usuario',

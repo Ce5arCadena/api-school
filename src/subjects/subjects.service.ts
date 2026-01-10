@@ -99,7 +99,9 @@ export class SubjectsService {
         message: 'Asignatura creada.',
         status: HttpStatus.CREATED,
         icon: 'success',
-        data: newSubject
+        data: {
+          subject: newSubject
+        }
       };
     } catch (error) {
       throw new HttpException({

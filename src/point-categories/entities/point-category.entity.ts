@@ -1,4 +1,5 @@
 import {
+    Index, 
     Column, 
     Entity, 
     ManyToOne, 
@@ -10,6 +11,7 @@ import { Subject } from "src/subjects/entities/subject.entity";
 import { RegistryPoint } from "src/registry-points/entities/registry-point.entity";
 
 @Entity()
+@Index(['name', 'subject', 'school'], { unique: true })
 export class PointCategory {
     @PrimaryGeneratedColumn()
     id: number;
@@ -17,7 +19,7 @@ export class PointCategory {
     @Column()
     name: string;
 
-    @Column({type: 'int'})
+    @Column({ type: 'int' })
     maxPoints: number;
 
     @ManyToOne(() => Subject, (subject) => subject.pointCategories)
