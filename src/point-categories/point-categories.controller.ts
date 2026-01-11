@@ -22,17 +22,17 @@ export class PointCategoriesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.pointCategoriesService.findOne(+id);
+  findOne(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.pointCategoriesService.findOne(id, userAuth);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updatePointCategoryDto: UpdatePointCategoryDto, @CurrentUser() userAuth: JwtPayload) {
-    return this.pointCategoriesService.update(+id, updatePointCategoryDto, userAuth);
+  update(@Param('id') id: number, @Body() updatePointCategoryDto: UpdatePointCategoryDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.pointCategoriesService.update(id, updatePointCategoryDto, userAuth);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.pointCategoriesService.remove(+id);
+  remove(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.pointCategoriesService.remove(id, userAuth);
   }
 }

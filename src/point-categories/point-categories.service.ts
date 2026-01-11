@@ -66,6 +66,7 @@ export class PointCategoriesService {
           subject: {
             id: existSubject.id
           },
+          isActive: 'ACTIVE'
         }
       });
       if (existCategory) {
@@ -104,8 +105,51 @@ export class PointCategoriesService {
     return `This action returns all pointCategories`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} pointCategory`;
+  async findOne(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const existCategory = await this.pointCategoryRepository.findOne({
+        where: {
+          id,
+          school: {
+            id: userAuth.school.id
+          },
+          isActive: 'ACTIVE'
+        },
+        relations: ['subject', 'registryPoints']
+      });
+      if (!existCategory) {
+        return {
+          message: 'No existe la categoria de puntos especificada.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      return {
+        message: 'Asignatura encontrada.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          existCategory
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al obtener la categoria de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   async update(id: number, updatePointCategoryDto: UpdatePointCategoryDto, user: JwtPayload) {
@@ -126,6 +170,7 @@ export class PointCategoriesService {
           school: {
             id: userAuth.school.id
           },
+          isActive: 'ACTIVE'
         },
         relations: ['subject']
       });
@@ -136,7 +181,7 @@ export class PointCategoriesService {
           icon: 'error',
         };
       };
-      console.log(pointCategory)
+
       const updatePointCategory: Partial<PointCategory> = {};
       if (updatePointCategoryDto.name) {
         const categoryPointByName = await this.pointCategoryRepository.findOne({
@@ -172,7 +217,6 @@ export class PointCategoriesService {
 
       if (updatePointCategoryDto.subject) {
         const teacherData = await this.teacherRepository.findOneBy({ user: { id: userAuth.id }, school: { id: userAuth.school.id } });
-        console.log(userAuth, teacherData)
         const existSubject = await this.subjectRepository.findOne({
           where: {
             id: updatePointCategoryDto.subject,
@@ -211,7 +255,55 @@ export class PointCategoriesService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} pointCategory`;
+  async remove(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const existCategory = await this.pointCategoryRepository.findOne({
+        where: {
+          id,
+          school: {
+            id: userAuth.school.id
+          },
+          isActive: 'ACTIVE'
+        }
+      });
+      if (!existCategory) {
+        return {
+          message: 'No existe la categoria de puntos especificada.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      await this.pointCategoryRepository.update({
+        id,
+        school: {
+          id: userAuth.school.id
+        },
+        isActive: 'ACTIVE'
+      }, {
+        isActive: 'INACTIVE'
+      });
+      return {
+        message: 'Categoria de puntos eliminada.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al eliminar la categoria de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 }

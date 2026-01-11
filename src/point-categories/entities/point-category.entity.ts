@@ -28,6 +28,9 @@ export class PointCategory {
     @OneToMany(() => RegistryPoint, (registryPoint) => registryPoint.pointCategory)
     registryPoints: RegistryPoint[];
 
+    @Column({ default: 'ACTIVE'})
+    isActive: string;
+
     @ManyToOne(() => School)
     school: School;
 }
