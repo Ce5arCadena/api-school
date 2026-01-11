@@ -36,7 +36,7 @@ export class PointCategoriesService {
         });
       };
       
-      const teacherData = await this.teacherRepository.findOneBy({ id: userAuth.id, school: { id: userAuth.id } });
+      const teacherData = await this.teacherRepository.findOneBy({ id: userAuth.id, school: { id: userAuth.school.id } });
       const existSubject = await this.subjectRepository.findOne({
         where: {
           id: createPointCategoryDto.subject,
@@ -108,8 +108,107 @@ export class PointCategoriesService {
     return `This action returns a #${id} pointCategory`;
   }
 
-  update(id: number, updatePointCategoryDto: UpdatePointCategoryDto) {
-    return `This action updates a #${id} pointCategory`;
+  async update(id: number, updatePointCategoryDto: UpdatePointCategoryDto, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const pointCategory = await this.pointCategoryRepository.findOne({
+        where: {
+          id,
+          school: {
+            id: userAuth.school.id
+          },
+        },
+        relations: ['subject']
+      });
+      if (!pointCategory) {
+        return {
+          message: 'No existe la categoria de puntos especificada.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+      console.log(pointCategory)
+      const updatePointCategory: Partial<PointCategory> = {};
+      if (updatePointCategoryDto.name) {
+        const categoryPointByName = await this.pointCategoryRepository.findOne({
+          where: {
+            name: updatePointCategoryDto.name,
+            school: {
+              id: userAuth.school.id
+            },
+            subject: {
+              id: pointCategory.subject.id
+            },
+          }
+        });
+        if (categoryPointByName && categoryPointByName.id !== id) {
+          return {
+            message: 'Ya existe una categoria de puntos con el mismo nombre. Elija otro.',
+            status: HttpStatus.CONFLICT,
+            icon: 'error',
+          };
+        };
+        updatePointCategory.name = updatePointCategoryDto.name.trim();  
+      };
+
+      if (updatePointCategoryDto.maxPoints && Number(updatePointCategoryDto.maxPoints) < Number(pointCategory.maxPoints)) {
+        return {
+          message: 'No se puede asignar menos puntos máximos.',
+          status: HttpStatus.BAD_REQUEST,
+          icon: 'error',
+        };
+      } else if (updatePointCategoryDto.maxPoints && Number(updatePointCategoryDto.maxPoints) >= Number(pointCategory.maxPoints)) {
+        updatePointCategory.maxPoints = updatePointCategory.maxPoints;
+      };
+
+      if (updatePointCategoryDto.subject) {
+        const teacherData = await this.teacherRepository.findOneBy({ user: { id: userAuth.id }, school: { id: userAuth.school.id } });
+        console.log(userAuth, teacherData)
+        const existSubject = await this.subjectRepository.findOne({
+          where: {
+            id: updatePointCategoryDto.subject,
+            isActive: 'ACTIVE',
+            school: {
+              id: userAuth.school.id
+            },
+            teacher: {
+              id: teacherData?.id
+            }
+          }
+        });
+        if (!existSubject) {
+          return {
+            message: 'La asignatura especificada no existe.',
+            status: HttpStatus.NOT_FOUND,
+            icon: 'error',
+          };
+        };
+        updatePointCategory.subject = existSubject;
+      };
+
+      await this.pointCategoryRepository.update(id, updatePointCategory);
+      return {
+        message: 'Categoria de puntos actualizada.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      console.log(error)
+      throw new HttpException({
+        message: 'Error al actualizar la categoria de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   remove(id: number) {

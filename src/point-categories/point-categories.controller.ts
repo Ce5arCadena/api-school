@@ -4,7 +4,7 @@ import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { PointCategoriesService } from './point-categories.service';
 import { CreatePointCategoryDto } from './dto/create-point-category.dto';
 import { UpdatePointCategoryDto } from './dto/update-point-category.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
 
 @Roles(UserRole.TEACHER)
 @Controller('point-categories')
@@ -26,9 +26,9 @@ export class PointCategoriesController {
     return this.pointCategoriesService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePointCategoryDto: UpdatePointCategoryDto) {
-    return this.pointCategoriesService.update(+id, updatePointCategoryDto);
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updatePointCategoryDto: UpdatePointCategoryDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.pointCategoriesService.update(+id, updatePointCategoryDto, userAuth);
   }
 
   @Delete(':id')
