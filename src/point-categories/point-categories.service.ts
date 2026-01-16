@@ -5,6 +5,7 @@ import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { Subject } from 'src/subjects/entities/subject.entity';
 import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { PointCategory } from './entities/point-category.entity';
+import { ParamsFindAllDto } from 'src/grades/dto/params-find-all.dto';
 import { CreatePointCategoryDto } from './dto/create-point-category.dto';
 import { UpdatePointCategoryDto } from './dto/update-point-category.dto';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -101,8 +102,56 @@ export class PointCategoriesService {
     };
   }
 
-  findAll() {
-    return `This action returns all pointCategories`;
+  async findAll(params: ParamsFindAllDto, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const query = this.pointCategoryRepository.createQueryBuilder('point_category')
+        .where('point_category.isActive = :isActive', { isActive: 'ACTIVE'})
+        .andWhere('point_category.schoolId = :schoolId', { schoolId: userAuth.school.id });
+
+
+      if (params.search) {
+        query.andWhere(
+          `(
+            point_category.name LIKE :search
+            OR point_category.maxPoints LIKE :search
+          )`,
+          { search: `%${params.search.trim()}%`}
+        );
+      };
+
+      const [pointCategorys, totalPointCategorys] = await query.orderBy('point_category.id', 'ASC')
+        .skip(params.offset)
+        .take(params.limit)
+        .leftJoinAndSelect('point_category.subject', 'subject')
+        .getManyAndCount();
+
+      return {
+        message: 'Lista de Puntos de Categoría.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          pointCategorys,
+          total: totalPointCategorys
+        }
+      };
+    } catch (error) {
+      console.log(error)
+      throw new HttpException({
+        message: 'Error al listar las categorias de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   async findOne(id: number, user: JwtPayload) {

@@ -2,9 +2,10 @@ import { CurrentUser, Roles } from 'src/auth/decorator';
 import { UserRole } from 'src/users/entities/user.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { PointCategoriesService } from './point-categories.service';
+import { ParamsFindAllDto } from 'src/grades/dto/params-find-all.dto';
 import { CreatePointCategoryDto } from './dto/create-point-category.dto';
 import { UpdatePointCategoryDto } from './dto/update-point-category.dto';
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Query } from '@nestjs/common';
 
 @Roles(UserRole.TEACHER)
 @Controller('point-categories')
@@ -17,8 +18,8 @@ export class PointCategoriesController {
   }
 
   @Get()
-  findAll() {
-    return this.pointCategoriesService.findAll();
+  findAll(@Query() params: ParamsFindAllDto, @CurrentUser() userAuth: JwtPayload) {
+    return this.pointCategoriesService.findAll(params, userAuth);
   }
 
   @Get(':id')
