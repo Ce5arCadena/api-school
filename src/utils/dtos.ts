@@ -16,3 +16,13 @@ export class QueryParamsBase {
     @IsOptional()
     search: string = '';
 }
+
+export class FindAllRegistryPoints {
+    @IsInt({ message: 'Debe especificar la materia.'})
+    @Type(() => Number)
+    idSubject: number;
+
+    @IsInt({ message: 'Debe especificar el grado.'})
+    @Type(() => Number)
+    idGrade: number;
+}

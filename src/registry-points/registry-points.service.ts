@@ -1,14 +1,16 @@
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
+import { FindAllRegistryPoints } from 'src/utils/dtos';
+import { Grade } from 'src/grades/entities/grade.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { Student } from 'src/students/entities/student.entity';
+import { Subject } from 'src/subjects/entities/subject.entity';
 import { RegistryPoint } from './entities/registry-point.entity';
 import { CreateRegistryPointDto } from './dto/create-registry-point.dto';
 import { UpdateRegistryPointDto } from './dto/update-registry-point.dto';
 import { PointCategory } from 'src/point-categories/entities/point-category.entity';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Subject } from 'src/subjects/entities/subject.entity';
 
 @Injectable()
 export class RegistryPointsService {
@@ -24,6 +26,9 @@ export class RegistryPointsService {
 
     @InjectRepository(Subject)
     private subjectRepository: Repository<Subject>,
+
+    @InjectRepository(Grade)
+    private gradeRepository: Repository<Grade>,
 
     private usersService: UsersService
   ){}
@@ -157,8 +162,102 @@ export class RegistryPointsService {
     };
   }
 
-  findAll() {
-    return `This action returns all registryPoints`;
+  async findAll(params: FindAllRegistryPoints, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const grade = await this.gradeRepository.findOne({
+        where: {
+          school: {
+            id: userAuth.school.id
+          },
+          id: params.idGrade,
+          isActive: 'ACTIVE'
+        },
+      });
+      if (!grade) {
+        return {
+          message: 'No existe el curso especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      const subject = await this.subjectRepository.findOne({
+        where: {
+          school: {
+            id: userAuth.school.id
+          },
+          id: params.idSubject,
+          teacher: {
+            id: userAuth.id
+          }
+        },
+        relations: ['grade']
+      });
+      if (!subject) {
+        return {
+          message: 'No existe la materia especificada.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      const students = await this.studentRepository.findBy({
+        grade: {
+          id: grade.id
+        },
+        school: {
+          id: userAuth.school.id
+        }
+      });
+
+      // TODO: Pendiente es armar o como voy a mostrar los datos de la lista de estudiantes con las categorias de puntos al lado,
+      // Y aparte pintar en cada recuadro un valo si ya lo tiene, y que si modifico alguno debo es actualizar esos valores
+      const query = this.registryPointRepository.createQueryBuilder('registry_point')
+        .where('registry_point.schoolId = :schoolId', { schoolId: userAuth.school.id })
+        .andWhere('registry_point.subjectId = :subjectId', { subjectId: subject.id });
+
+      // if (params.search) {
+      //   query.andWhere(`
+      //   (
+      //     registry_point.points LIKE :search
+      //   )`, 
+      //   { search: `%${params.search.trim()}%`});
+      // };
+
+      // const [registryPoints, totalRegistryPoints] = await query.orderBy('registry_point.id', 'ASC')
+      //   .take(params.limit)
+      //   .skip(params.offset)
+      //   .leftJoinAndSelect('registry_point.student', 'student')
+      //   .leftJoinAndSelect('registry_point.pointCategory', 'pointCategory')
+      //   .leftJoinAndSelect('registry_point.subject', 'subject')
+      //   .getManyAndCount()
+
+      // return {
+      //   message: 'Lista de Puntos de Categoría.',
+      //   status: HttpStatus.OK,
+      //   icon: 'success',
+      //   data: {
+      //     registryPoints,
+      //     total: totalRegistryPoints
+      //   }
+      // };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al listar los registros de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   async findOne(id: number, user: JwtPayload) {

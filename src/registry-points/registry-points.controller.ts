@@ -1,10 +1,11 @@
+import { FindAllRegistryPoints } from 'src/utils/dtos';
 import { CurrentUser, Roles } from 'src/auth/decorator';
 import { UserRole } from 'src/users/entities/user.entity';
+import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { RegistryPointsService } from './registry-points.service';
 import { CreateRegistryPointDto } from './dto/create-registry-point.dto';
 import { UpdateRegistryPointDto } from './dto/update-registry-point.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 
 @Controller('registry-points')
 @Roles(UserRole.TEACHER)
@@ -17,8 +18,11 @@ export class RegistryPointsController {
   }
 
   @Get()
-  findAll() {
-    return this.registryPointsService.findAll();
+  findAll(
+    @Query() params: FindAllRegistryPoints,
+    @CurrentUser() userAuth: JwtPayload
+  ) {
+    return this.registryPointsService.findAll(params, userAuth);
   }
 
   @Get(':id')

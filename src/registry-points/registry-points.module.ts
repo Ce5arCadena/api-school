@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/users/users.module';
+import { Grade } from 'src/grades/entities/grade.entity';
 import { Student } from 'src/students/entities/student.entity';
 import { Subject } from 'src/subjects/entities/subject.entity';
 import { RegistryPoint } from './entities/registry-point.entity';
@@ -11,7 +12,7 @@ import { PointCategory } from 'src/point-categories/entities/point-category.enti
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([RegistryPoint, PointCategory, Student, Subject])
+    TypeOrmModule.forFeature([RegistryPoint, PointCategory, Student, Subject, Grade])
   ],
   controllers: [RegistryPointsController],
   providers: [RegistryPointsService],
