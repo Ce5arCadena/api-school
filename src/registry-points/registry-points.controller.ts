@@ -22,8 +22,8 @@ export class RegistryPointsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.registryPointsService.findOne(+id);
+  findOne(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.registryPointsService.findOne(id, userAuth);
   }
 
   @Patch(':id')
@@ -32,7 +32,7 @@ export class RegistryPointsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.registryPointsService.remove(+id);
+  remove(@Param('id') id: number, @CurrentUser() userAuth: JwtPayload) {
+    return this.registryPointsService.remove(id, userAuth);
   }
 }

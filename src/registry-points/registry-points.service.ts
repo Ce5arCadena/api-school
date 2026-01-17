@@ -38,7 +38,7 @@ export class RegistryPointsService {
           status: HttpStatus.UNAUTHORIZED,
           icon: 'error',
         });
-      };
+      }; 
 
       const categoryPoints = await this.pointCategoryRepository.findOne({
         where: {
@@ -83,7 +83,7 @@ export class RegistryPointsService {
       if (subject.grade.id !== categoryPoints.subject.id) {
         return {
           message: 'La materia especificada no está relacionada con la categoría de puntos.',
-          status: HttpStatus.NOT_FOUND,
+          status: HttpStatus.CONFLICT,
           icon: 'error',
         };
       };
@@ -112,6 +112,28 @@ export class RegistryPointsService {
         };
       };
 
+      // Verifico si ya en esa categoria tiene puntos asignados, porque solo puede es actualizar el valor, no dos del mismo
+      const registryPointExist = await this.registryPointRepository.findOne({
+        where: {
+          school: {
+            id: userAuth.school.id
+          },
+          pointCategory: {
+            id: createRegistryPointDto.pointCategory
+          },
+          student: {
+            id: createRegistryPointDto.student
+          }
+        }
+      });
+      if (registryPointExist) {
+        return {
+          message: 'Solo se puede asignar una vez los puntos por categoría.',
+          status: HttpStatus.CONFLICT,
+          icon: 'error',
+        };
+      };
+
       const newRegsitryPoints = await this.registryPointRepository.save({
         points: createRegistryPointDto.points,
         school: { id: userAuth.school.id },
@@ -127,7 +149,6 @@ export class RegistryPointsService {
         data: newRegsitryPoints
       };
     } catch (error) {
-      console.log(error)
       throw new HttpException({
         message: 'Error al registrar los puntos.',
         icon: 'error',
@@ -140,15 +161,96 @@ export class RegistryPointsService {
     return `This action returns all registryPoints`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} registryPoint`;
+  async findOne(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const registryPoint = await this.registryPointRepository.findOne({
+        where: {
+          id,
+          school: {
+            id: userAuth.school.id
+          }
+        },
+        relations: ['student', 'pointCategory', 'subject']
+      });
+      if (!registryPoint) {
+        return {
+          message: 'No existe el registro especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      return {
+        message: 'Registro de puntos encontrado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          registryPoint
+        }
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al buscar el registro de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 
   update(id: number, updateRegistryPointDto: UpdateRegistryPointDto) {
     return `This action updates a #${id} registryPoint`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} registryPoint`;
+  async remove(id: number, user: JwtPayload) {
+    try {
+      //Usuario autenticado
+      const userAuth = await this.usersService.findByEmail(user.email);
+      if (!userAuth) {
+        throw new UnauthorizedException({
+          message: 'No está autorizado.',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        });
+      };
+
+      const registryPoint = await this.registryPointRepository.findOne({
+        where: {
+          id,
+          school: {
+            id: userAuth.school.id
+          }
+        }
+      });
+      if (!registryPoint) {
+        return {
+          message: 'No existe el registro especificado.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
+      await this.registryPointRepository.delete(id);
+      return {
+        message: 'Registro de puntos eliminado.',
+        status: HttpStatus.OK,
+        icon: 'success',
+      };
+    } catch (error) {
+      throw new HttpException({
+        message: 'Error al eliminar el registro de puntos.',
+        icon: 'error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    };
   }
 }
