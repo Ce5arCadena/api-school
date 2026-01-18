@@ -13,6 +13,7 @@ export class RegistryPoint {
     points: number;
 
     @ManyToOne(() => Student, (student) => student)
+    @JoinColumn()
     student: Student;
 
     @ManyToOne(() => PointCategory, (pointCategory) => pointCategory.registryPoints)

@@ -6,6 +6,7 @@ import { Grade } from 'src/grades/entities/grade.entity';
 import { JwtPayload } from 'src/auth/dto/jwt-payload.dto';
 import { Student } from 'src/students/entities/student.entity';
 import { Subject } from 'src/subjects/entities/subject.entity';
+import { Teacher } from 'src/teachers/entities/teacher.entity';
 import { RegistryPoint } from './entities/registry-point.entity';
 import { CreateRegistryPointDto } from './dto/create-registry-point.dto';
 import { UpdateRegistryPointDto } from './dto/update-registry-point.dto';
@@ -23,6 +24,9 @@ export class RegistryPointsService {
 
     @InjectRepository(Student)
     private studentRepository: Repository<Student>,
+
+    @InjectRepository(Teacher)
+    private teacherRepository: Repository<Teacher>,
 
     @InjectRepository(Subject)
     private subjectRepository: Repository<Subject>,
@@ -174,6 +178,15 @@ export class RegistryPointsService {
         });
       };
 
+      const teacherExists = await this.teacherRepository.findOneBy({ user: { id: userAuth.id }, school: { id: userAuth.school.id }, isActive: 'ACTIVE' });
+      if (!teacherExists) {
+        return {
+          message: 'No tienes permiso para ejecutar esta acción',
+          status: HttpStatus.UNAUTHORIZED,
+          icon: 'error',
+        };
+      };
+
       const grade = await this.gradeRepository.findOne({
         where: {
           school: {
@@ -190,7 +203,6 @@ export class RegistryPointsService {
           icon: 'error',
         };
       };
-
       const subject = await this.subjectRepository.findOne({
         where: {
           school: {
@@ -198,7 +210,7 @@ export class RegistryPointsService {
           },
           id: params.idSubject,
           teacher: {
-            id: userAuth.id
+            id: teacherExists.id
           }
         },
         relations: ['grade']
@@ -211,20 +223,26 @@ export class RegistryPointsService {
         };
       };
 
-      const students = await this.studentRepository.findBy({
-        grade: {
-          id: grade.id
-        },
-        school: {
-          id: userAuth.school.id
-        }
-      });
-
-      // TODO: Pendiente es armar o como voy a mostrar los datos de la lista de estudiantes con las categorias de puntos al lado,
-      // Y aparte pintar en cada recuadro un valo si ya lo tiene, y que si modifico alguno debo es actualizar esos valores
-      const query = this.registryPointRepository.createQueryBuilder('registry_point')
-        .where('registry_point.schoolId = :schoolId', { schoolId: userAuth.school.id })
-        .andWhere('registry_point.subjectId = :subjectId', { subjectId: subject.id });
+      // const query = await this.studentRepository.createQueryBuilder('student')
+      //   .leftJoinAndSelect(
+      //     'registry_point',
+      //     'points',
+      //     'points.studentId = student.id AND points.subjectId = :subjectId'
+      //   )
+      //   .leftJoinAndSelect('points.pointCategory', 'pointCategory')
+      //   .leftJoinAndSelect('points.subject', 'subject')
+      //   .where('student.isActive = :isActive', { isActive: 'ACTIVE' })
+      //   .andWhere('student.schoolId = :schoolId', { schoolId: userAuth.school.id })
+      //   .setParameter('subjectId', subject.id)
+      //   .getMany();
+      const query = await this.studentRepository.createQueryBuilder('student')
+        .leftJoinAndSelect('student.registryPoints', 'points', 'points.subjectId = :subjectId')
+        .leftJoinAndSelect('points.pointCategory', 'pointCategory')
+        .leftJoinAndSelect('points.subject', 'subject')
+        .where('student.isActive = :isActive', { isActive: 'ACTIVE' })
+        .andWhere('student.schoolId = :schoolId', { schoolId: userAuth.school.id })
+        .setParameter('subjectId', subject.id)
+        .getMany();
 
       // if (params.search) {
       //   query.andWhere(`
@@ -242,15 +260,16 @@ export class RegistryPointsService {
       //   .leftJoinAndSelect('registry_point.subject', 'subject')
       //   .getManyAndCount()
 
-      // return {
-      //   message: 'Lista de Puntos de Categoría.',
-      //   status: HttpStatus.OK,
-      //   icon: 'success',
-      //   data: {
-      //     registryPoints,
-      //     total: totalRegistryPoints
-      //   }
-      // };
+      return {
+        message: 'Lista de Puntos de Categoría.',
+        status: HttpStatus.OK,
+        icon: 'success',
+        data: {
+          // registryPoints,
+          // total: totalRegistryPoints
+          query
+        }
+      };
     } catch (error) {
       throw new HttpException({
         message: 'Error al listar los registros de puntos.',
