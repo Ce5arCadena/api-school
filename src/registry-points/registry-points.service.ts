@@ -223,18 +223,25 @@ export class RegistryPointsService {
         };
       };
 
-      // const query = await this.studentRepository.createQueryBuilder('student')
-      //   .leftJoinAndSelect(
-      //     'registry_point',
-      //     'points',
-      //     'points.studentId = student.id AND points.subjectId = :subjectId'
-      //   )
-      //   .leftJoinAndSelect('points.pointCategory', 'pointCategory')
-      //   .leftJoinAndSelect('points.subject', 'subject')
-      //   .where('student.isActive = :isActive', { isActive: 'ACTIVE' })
-      //   .andWhere('student.schoolId = :schoolId', { schoolId: userAuth.school.id })
-      //   .setParameter('subjectId', subject.id)
-      //   .getMany();
+      const pointsCategory = await this.pointCategoryRepository.find({
+        where: {
+          subject: {
+            id: subject.id
+          },
+          isActive: 'ACTIVE',
+          school: {
+            id: userAuth.school.id
+          },
+        }
+      });
+      if (!pointsCategory) {
+        return {
+          message: 'Bebe registrar primero categorías de puntos.',
+          status: HttpStatus.NOT_FOUND,
+          icon: 'error',
+        };
+      };
+
       const query = await this.studentRepository.createQueryBuilder('student')
         .leftJoinAndSelect('student.registryPoints', 'points', 'points.subjectId = :subjectId')
         .leftJoinAndSelect('points.pointCategory', 'pointCategory')
@@ -244,29 +251,13 @@ export class RegistryPointsService {
         .setParameter('subjectId', subject.id)
         .getMany();
 
-      // if (params.search) {
-      //   query.andWhere(`
-      //   (
-      //     registry_point.points LIKE :search
-      //   )`, 
-      //   { search: `%${params.search.trim()}%`});
-      // };
-
-      // const [registryPoints, totalRegistryPoints] = await query.orderBy('registry_point.id', 'ASC')
-      //   .take(params.limit)
-      //   .skip(params.offset)
-      //   .leftJoinAndSelect('registry_point.student', 'student')
-      //   .leftJoinAndSelect('registry_point.pointCategory', 'pointCategory')
-      //   .leftJoinAndSelect('registry_point.subject', 'subject')
-      //   .getManyAndCount()
 
       return {
         message: 'Lista de Puntos de Categoría.',
         status: HttpStatus.OK,
         icon: 'success',
         data: {
-          // registryPoints,
-          // total: totalRegistryPoints
+          pointsCategory,
           query
         }
       };
