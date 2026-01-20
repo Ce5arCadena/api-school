@@ -21,9 +21,9 @@ export class AuthService {
       if (!user) {
         return {
           message: 'Usuario y/o contraseña incorrectos.',
-          status: HttpStatus.UNAUTHORIZED,
+          statusCode: HttpStatus.UNAUTHORIZED,
           icon: 'error',
-          errors: [],
+          error: [],
         };
       };
       
@@ -31,9 +31,9 @@ export class AuthService {
       if (!passwordCompare) {
         return {
           message: 'Usuario y/o contraseña incorrectos.',
-          status: HttpStatus.UNAUTHORIZED,
+          statusCode: HttpStatus.UNAUTHORIZED,
           icon: 'error',
-          errors: [],
+          error: [],
         };
       };
 
@@ -42,18 +42,20 @@ export class AuthService {
 
       return {
         message: 'Login éxitoso.',
-        status: HttpStatus.CREATED,
+        statusCode: HttpStatus.CREATED,
         icon: 'success',
+        error: '',
         data: {
-          token
+          token,
+          rol: user.rol
         }
       };
     } catch (error) {
       throw new HttpException({
         message: 'Error al ejecutar esta acción.',
         icon: 'error',
-        errors: [error],
-        status: HttpStatus.UNAUTHORIZED,
+        error: [error],
+        statusCode: HttpStatus.UNAUTHORIZED,
       }, HttpStatus.UNAUTHORIZED);
     };
   };
